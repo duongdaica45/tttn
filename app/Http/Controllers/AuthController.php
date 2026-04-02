@@ -44,7 +44,7 @@ class AuthController extends Controller
             'email' => $user->email,
             'chuc_vu' => $user->chuc_vu
         ]
-    ]);
+    ],200, [], JSON_UNESCAPED_UNICODE);
 }
 
 }
