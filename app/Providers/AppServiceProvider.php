@@ -14,9 +14,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-       if (App::environment(['production', 'staging'])) {
-        URL::forceScheme('https');
-    }
+        // Để trống hoặc giữ các bind dịch vụ khác
     }
 
     /**
@@ -24,7 +22,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
         Schema::defaultStringLength(191);
+
+        // Chuyển đoạn code này xuống hàm boot
+        if (App::environment(['production', 'staging'])) {
+            URL::forceScheme('https');
+        }
     }
 }
