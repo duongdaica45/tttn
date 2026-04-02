@@ -1,6 +1,6 @@
 FROM php:8.2-cli
 
-# Cài đặt đầy đủ extension để Composer không bị văng
+# Cài đặt các extension cần thiết cho PostgreSQL và Mail
 RUN apt-get update && apt-get install -y \
     libpq-dev unzip git curl libzip-dev libonig-dev libxml2-dev \
     && docker-php-ext-install pdo pdo_pgsql zip mbstring bcmath xml \
@@ -10,21 +10,25 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
 
-# Copy 2 file này trước để tối ưu cache
+# Copy file cấu hình trước
 COPY composer.json composer.lock ./
 
-# Thiết lập giới hạn bộ nhớ và chạy install
+# Chống lỗi Exit Code 2 do thiếu RAM trên Render
+ENV COMPOSER_ALLOW_SUPERUSER=1
 ENV COMPOSER_MEMORY_LIMIT=-1
-RUN composer install --no-dev --no-scripts --optimize-autoloader --ignore-platform-reqs --no-interaction
+RUN composer install --no-dev --no-scripts --optimize-autoloader --ignore-platform-reqs
 
-# Sau đó mới copy toàn bộ code
 COPY . .
 
-# Tạo thư mục và phân quyền
+# Tạo cấu trúc thư mục storage nếu chưa có (tránh lỗi chmod)
 RUN mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache bootstrap/cache \
     && chown -R www-data:www-data /app \
     && chmod -R 775 storage bootstrap/cache
 
+# Render dùng port 10000
 EXPOSE 10000
 
-CMD php artisan config:cache && php artisan route:cache && php artisan serve --host=0.0.0.0 --port=10000
+# Lệnh chạy: Tạo cache cấu hình và khởi động server
+CMD php artisan config:cache && \
+    php artisan route:cache && \
+    php artisan serve --host=0.0.0.0 --port=10000
