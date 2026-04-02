@@ -1,5 +1,6 @@
 FROM php:8.2-cli
 
+
 RUN apt-get update && apt-get install -y \
     libpq-dev \
     unzip \
@@ -7,7 +8,9 @@ RUN apt-get update && apt-get install -y \
     curl \
     libzip-dev \
     libonig-dev \
-    && docker-php-ext-install pdo pdo_pgsql zip mbstring
+    && docker-php-ext-install pdo pdo_pgsql zip mbstring \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
@@ -15,16 +18,18 @@ WORKDIR /app
 
 COPY . .
 
-COPY .env.example .env
-
-RUN chmod -R 777 storage bootstrap/cache
+RUN mkdir -p storage/framework/sessions \
+    storage/framework/views \
+    storage/framework/cache \
+    bootstrap/cache
 
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
-RUN php artisan key:generate
-
-RUN php artisan config:cache
+RUN chown -R www-data:www-data /app \
+    && chmod -R 775 storage bootstrap/cache
 
 EXPOSE 10000
 
-CMD php artisan serve --host=0.0.0.0 --port=10000
+CMD php artisan config:cache && \
+    php artisan route:cache && \
+    php artisan serve --host=0.0.0.0 --port=10000
