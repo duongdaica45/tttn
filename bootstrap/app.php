@@ -12,11 +12,17 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        // 1. Luôn để Cors lên đầu (Đã đúng)
         $middleware->trustProxies(at: '*');
 
-        // Gọi Middleware bằng tên Class (Đúng kiểu string/array mà IDE mong đợi)
+        // Đưa Middleware tự tạo lên đầu danh sách append
         $middleware->append(\App\Http\Middleware\HandleCorsHeaders::class);
+
+        // Vẫn giữ Middleware hệ thống để hỗ trợ
+        $middleware->append(\Illuminate\Http\Middleware\HandleCors::class);
+
+        $middleware->validateCsrfTokens(except: [
+            'api/*',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
