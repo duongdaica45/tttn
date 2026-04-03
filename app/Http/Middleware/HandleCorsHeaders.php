@@ -10,20 +10,21 @@ class HandleCorsHeaders
 {
     public function handle(Request $request, Closure $next): Response
     {
-        // Nếu là yêu cầu OPTIONS (Preflight), trả về 200 OK ngay lập tức kèm Header
         if ($request->isMethod('OPTIONS')) {
-            return response('', 200)
-                ->header('Access-Control-Allow-Origin', '*')
+            return response('', 204)
+                ->header('Access-Control-Allow-Origin', 'https://duongdaica45.github.io')
                 ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-                ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
+                ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin')
+                ->header('Access-Control-Allow-Credentials', 'true');
         }
 
         $response = $next($request);
 
-        // Đảm bảo mọi response đều có Header này
-        $response->headers->set('Access-Control-Allow-Origin', '*');
+        // Ép Header vào phản hồi thực tế
+        $response->headers->set('Access-Control-Allow-Origin', 'https://duongdaica45.github.io');
         $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
+        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+        $response->headers->set('Access-Control-Allow-Credentials', 'true');
 
         return $response;
     }
