@@ -4,6 +4,8 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 
+
+
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__ . '/../routes/web.php',
@@ -15,10 +17,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: '*');
 
         // Đưa Middleware tự tạo lên đầu danh sách append
-        $middleware->append(\App\Http\Middleware\HandleCorsHeaders::class);
+       // $middleware->append(\App\Http\Middleware\HandleCorsHeaders::class);
 
         // Vẫn giữ Middleware hệ thống để hỗ trợ
-        $middleware->append(\Illuminate\Http\Middleware\HandleCors::class);
+        $middleware->prepend(\Illuminate\Http\Middleware\HandleCors::class);
 
         $middleware->validateCsrfTokens(except: [
             'api/*',

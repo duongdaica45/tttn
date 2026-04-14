@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\NhanVien;
+use Illuminate\Support\Facades\DB;
+
 
 class NhanVienController extends Controller
 {
@@ -113,5 +115,23 @@ class NhanVienController extends Controller
             'message' => 'Cập nhật nhân viên thành công',
             'data' => $nhanvien
         ]);
+    }
+    public function getNhanVienFull()
+    {
+        try {
+            $nhanVienFull = DB::table('thongtinnhanvien')
+                ->where('chuc_vu', 'Full')
+                ->get();
+
+            return response()->json([
+                'message' => 'Lấy danh sách thành công',
+                'data' => $nhanVienFull
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Lỗi server',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }
