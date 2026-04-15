@@ -16,58 +16,71 @@ class DiemDanhController extends Controller
 
         $nhanvien_id = $request->nhanvien_id;
         $today = Carbon::today();
+        $now = Carbon::now();
 
-        // kiểm tra ngày mở
+        // check ngày mở
         $ngayMo = DB::table('ngay_mo')
             ->whereDate('ngay', $today)
             ->where('mo_tao_ca', true)
             ->first();
 
         if (!$ngayMo) {
-            return response()->json([
-                'message' => 'Hôm nay không cho điểm danh!'
-            ], 400);
+            return response()->json(['message' => 'Hôm nay không cho điểm danh!'], 400);
         }
 
-        // kiểm tra lịch làm
+        // check nghỉ
+        $nghi = DB::table('don_xin_nghi')
+            ->where('nhan_vien_id', $nhanvien_id)
+            ->where('trang_thai', 'chap_nhan')
+            ->whereDate('tu_ngay', '<=', $today)
+            ->whereDate('den_ngay', '>=', $today)
+            ->first();
+
+        if ($nghi) {
+            return response()->json(['message' => 'Bạn đang nghỉ phép!'], 400);
+        }
+
+        // check lịch
         $lich = DB::table('dang_ky_ca')
             ->join('lich_lam', 'dang_ky_ca.lich_lam_id', '=', 'lich_lam.id')
             ->where('dang_ky_ca.nhanvien_id', $nhanvien_id)
-            ->where('dang_ky_ca.trang_thai', 'dang_ky') // hoặc chap_nhan
+            ->whereIn('dang_ky_ca.trang_thai', ['dang_ky', 'chap_nhan'])
             ->whereDate('lich_lam.ngay', $today)
             ->first();
 
         if (!$lich) {
-            return response()->json([
-                'message' => 'Bạn không có ca làm hôm nay!'
-            ], 400);
+            return response()->json(['message' => 'Bạn không có ca làm hôm nay!'], 400);
         }
 
-        // kiểm tra ca làm
-        $ca = DB::table('ca_lam')
-            ->where('id', $lich->ca_lam_id)
-            ->first();
+        // lấy ca
+        $ca = DB::table('ca_lam')->where('id', $lich->ca_lam_id)->first();
 
-        $now = Carbon::now();
-
-        if ($now->lt(Carbon::parse($ca->gio_bat_dau)->subMinutes(30))) {
-            return response()->json([
-                'message' => 'Chưa đến giờ check-in!'
-            ], 400);
+        if (!$ca) {
+            return response()->json(['message' => 'Không tìm thấy ca làm!'], 400);
         }
 
-        // kiểm tra đã check-in
+        // xử lý giờ
+        $gioBatDau = Carbon::parse($today . ' ' . $ca->gio_bat_dau);
+
+        if ($now->lt($gioBatDau->copy()->subMinutes(30))) {
+            return response()->json(['message' => 'Chưa đến giờ check-in!'], 400);
+        }
+
+        if ($now->gt($gioBatDau->copy()->addHours(2))) {
+            return response()->json(['message' => 'Đã quá giờ check-in!'], 400);
+        }
+
+        // check trùng
         $exists = DB::table('diemdanh')
             ->where('nhanvien_id', $nhanvien_id)
             ->whereDate('ngay', $today)
             ->first();
 
         if ($exists) {
-            return response()->json([
-                'message' => 'Hôm nay bạn đã check-in rồi!'
-            ], 400);
+            return response()->json(['message' => 'Hôm nay bạn đã check-in rồi!'], 400);
         }
 
+        // insert
         DB::table('diemdanh')->insert([
             'nhanvien_id' => $nhanvien_id,
             'ngay' => $today,
@@ -75,9 +88,10 @@ class DiemDanhController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Chúc bạn làm việc một ngày vui vẻ! Check-in thành công.'
+            'message' => 'Check-in thành công!'
         ]);
     }
+
 
     public function checkOut(Request $request)
     {
