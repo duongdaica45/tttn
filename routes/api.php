@@ -11,7 +11,7 @@ use App\Http\Controllers\LuongController;
 use Illuminate\Support\Facades\DB;
 
 
-Route::options('{any}', function() {
+Route::options('{any}', function () {
     return response()->json([], 200)
         ->header('Access-Control-Allow-Origin', '*')
         ->header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS, PUT, DELETE')
@@ -31,6 +31,7 @@ Route::delete('/nhanvien/{id}', [NhanVienController::class, 'destroy']);
 Route::put('/nhanvien/{id}', [NhanVienController::class, 'update']);
 //Mở ngày 
 Route::post('/next-week', [LichController::class, 'getNextWeek']);
+Route::post('/current-week', [LichController::class, 'getCurrentWeek']);
 Route::post('/toggle-ngay', [LichController::class, 'toggleNgay']);
 Route::post('/lich-lam', [LichController::class, 'store']);
 Route::get('/ngay-mo', function () {
@@ -42,6 +43,8 @@ Route::get('/ngay-mo', function () {
 });
 Route::get('/lich-lam', [LichController::class, 'index']);
 Route::delete('/lich-lam/{id}', [LichController::class, 'destroy']);
+Route::get('/ca-trong-tuan', [LichController::class, 'caTrongTuan']);
+
 //Đăng kí ca 
 Route::post('/dang-ky-ca', [DangKyCaController::class, 'store']);
 Route::post('/huy-dang-ky-ca', [DangKyCaController::class, 'huyDangKy']);

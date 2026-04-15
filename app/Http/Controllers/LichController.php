@@ -41,10 +41,39 @@ class LichController extends Controller
 
             $start->addDay();
         }
-
         return response()->json($days);
     }
 
+    public function getCurrentWeek(Request $request)
+    {
+        $request->validate([
+            'ngay' => 'required|date'
+        ]);
+
+        $ngay = Carbon::parse($request->ngay);
+
+        // ✅ tuần hiện tại (thứ 2 → CN)
+        $start = $ngay->copy()->startOfWeek();
+        $end = $ngay->copy()->endOfWeek();
+
+        $days = [];
+
+        while ($start <= $end) {
+            $record = DB::table('ngay_mo')
+                ->whereDate('ngay', $start)
+                ->first();
+
+            $days[] = [
+                'ngay' => $start->toDateString(),
+                'thu' => $start->translatedFormat('l'),
+                'mo_tao_ca' => $record ? $record->mo_tao_ca : false
+            ];
+
+            $start->addDay();
+        }
+
+        return response()->json($days);
+    }
 
 
     public function toggleNgay(Request $request)
@@ -195,5 +224,55 @@ class LichController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+    public function caTrongTuan(Request $request)
+    {
+        $request->validate([
+            'nhanvien_id' => 'required|exists:thongtinnhanvien,id',
+        ]);
+
+        $nhanvien_id = $request->nhanvien_id;
+
+        // ===== TUẦN HIỆN TẠI =====
+        $startOfWeek = Carbon::now()->startOfWeek(); // Thứ 2
+        $endOfWeek = Carbon::now()->endOfWeek();     // Chủ nhật
+
+        // ===== TUẦN SAU =====
+        $nextWeekStart = Carbon::now()->addWeek()->startOfWeek();
+        $nextWeekEnd = Carbon::now()->addWeek()->endOfWeek();
+
+        // ===== QUERY =====
+        $data = DB::table('dang_ky_ca')
+            ->join('lich_lam', 'dang_ky_ca.lich_lam_id', '=', 'lich_lam.id')
+            ->where('dang_ky_ca.nhanvien_id', $nhanvien_id)
+            ->where(function ($query) use (
+                $startOfWeek,
+                $endOfWeek,
+                $nextWeekStart,
+                $nextWeekEnd
+            ) {
+                $query->whereBetween('lich_lam.ngay', [$startOfWeek, $endOfWeek])
+                    ->orWhereBetween('lich_lam.ngay', [$nextWeekStart, $nextWeekEnd]);
+            })
+            ->orderBy('lich_lam.ngay', 'asc')
+            ->select(
+                'lich_lam.ngay',
+                'lich_lam.ca_lam_id',
+                'dang_ky_ca.id as dang_ky_id'
+            )
+            ->get();
+
+        return response()->json([
+            'message' => 'Lấy ca thành công',
+            'tuan_nay' => [
+                'tu' => $startOfWeek->toDateString(),
+                'den' => $endOfWeek->toDateString(),
+            ],
+            'tuan_sau' => [
+                'tu' => $nextWeekStart->toDateString(),
+                'den' => $nextWeekEnd->toDateString(),
+            ],
+            'data' => $data
+        ]);
     }
 }
