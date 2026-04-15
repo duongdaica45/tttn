@@ -17,10 +17,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: '*');
 
         // Đưa Middleware tự tạo lên đầu danh sách append
-        //$middleware->append(\App\Http\Middleware\HandleCorsHeaders::class);
+        $middleware->append(\App\Http\Middleware\HandleCorsHeaders::class);
 
         // Vẫn giữ Middleware hệ thống để hỗ trợ
-        $middleware->prepend(\Illuminate\Http\Middleware\HandleCors::class);
+        //$middleware->prepend(\Illuminate\Http\Middleware\HandleCors::class);
 
         $middleware->validateCsrfTokens(except: [
             'api/*',
