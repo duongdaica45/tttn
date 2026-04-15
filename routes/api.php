@@ -11,12 +11,12 @@ use App\Http\Controllers\LuongController;
 use Illuminate\Support\Facades\DB;
 
 
-Route::options('{any}', function () {
-    return response()->json([], 200)
-        ->header('Access-Control-Allow-Origin', '*')
-        ->header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS, PUT, DELETE')
-        ->header('Access-Control-Allow-Headers', 'Content-Type, Accept, Authorization, X-Requested-With');
-})->where('any', '.*');
+// Route::options('{any}', function () {
+//     return response()->json([], 200)
+//         ->header('Access-Control-Allow-Origin', '*')
+//         ->header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS, PUT, DELETE')
+//         ->header('Access-Control-Allow-Headers', 'Content-Type, Accept, Authorization, X-Requested-With');
+// })->where('any', '.*');
 
 
 //Đăng nhập

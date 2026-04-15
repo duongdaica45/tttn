@@ -13,11 +13,9 @@ class DiemDanhController extends Controller
         $request->validate([
             'nhanvien_id' => 'required|exists:thongtinnhanvien,id'
         ]);
-
         $nhanvien_id = $request->nhanvien_id;
         $today = Carbon::today();
         $now = Carbon::now();
-
         // check ngày mở
         $ngayMo = DB::table('ngay_mo')
             ->whereDate('ngay', $today)
@@ -27,7 +25,6 @@ class DiemDanhController extends Controller
         if (!$ngayMo) {
             return response()->json(['message' => 'Hôm nay không cho điểm danh!'], 400);
         }
-
         // check nghỉ
         $nghi = DB::table('don_xin_nghi')
             ->where('nhan_vien_id', $nhanvien_id)
@@ -39,7 +36,6 @@ class DiemDanhController extends Controller
         if ($nghi) {
             return response()->json(['message' => 'Bạn đang nghỉ phép!'], 400);
         }
-
         // check lịch
         $lich = DB::table('dang_ky_ca')
             ->join('lich_lam', 'dang_ky_ca.lich_lam_id', '=', 'lich_lam.id')
@@ -51,17 +47,14 @@ class DiemDanhController extends Controller
         if (!$lich) {
             return response()->json(['message' => 'Bạn không có ca làm hôm nay!'], 400);
         }
-
         // lấy ca
         $ca = DB::table('ca_lam')->where('id', $lich->ca_lam_id)->first();
 
         if (!$ca) {
             return response()->json(['message' => 'Không tìm thấy ca làm!'], 400);
         }
-
         // xử lý giờ
-        $gioBatDau = Carbon::parse($today . ' ' . $ca->gio_bat_dau);
-
+        $gioBatDau = Carbon::today()->setTimeFromTimeString($ca->gio_bat_dau);
         if ($now->lt($gioBatDau->copy()->subMinutes(30))) {
             return response()->json(['message' => 'Chưa đến giờ check-in!'], 400);
         }
@@ -116,7 +109,17 @@ class DiemDanhController extends Controller
         }
 
         $gio_ra = Carbon::now();
-        $gio_vao = Carbon::parse($record->gio_vao);
+
+        try {
+            $gio_vao = Carbon::createFromFormat('Y-m-d H:i:s', $record->gio_vao);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Dữ liệu giờ vào lỗi!',
+                'debug' => $record->gio_vao
+            ], 500);
+        }
+        // tính giờ chuẩn
+        $so_gio = round($gio_vao->floatDiffInHours($gio_ra), 2);
 
         // check lỗi
         if ($gio_ra->lessThan($gio_vao)) {
@@ -125,9 +128,7 @@ class DiemDanhController extends Controller
             ], 400);
         }
 
-        // tính giờ
-        $so_gio = $gio_vao->diffInSeconds($gio_ra) / 3600;
-        $so_gio = round($so_gio, 2);
+
 
         // cập nhật điểm danh
         DB::table('diemdanh')

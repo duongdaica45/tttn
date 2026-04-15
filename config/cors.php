@@ -6,8 +6,8 @@ return [
     'allowed_methods' => ['*'],
 
     // Thay vì để dấu sao, hãy điền chính xác domain GitHub của bạn
-    'allowed_origins' => ['https://duongdaica45.github.io'], 
-    //'allowed_origins' => ['*'], 
+    //'allowed_origins' => ['https://duongdaica45.github.io'], 
+    'allowed_origins' => ['*'], 
 
     // Quan trọng: Để mảng rỗng nếu không dùng pattern
     'allowed_origins_patterns' => [], 
