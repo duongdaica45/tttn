@@ -46,6 +46,17 @@ class DangKyCaController extends Controller
                     'message' => 'Lịch làm không tồn tại'
                 ], 404);
             }
+            // ================================
+            // ❌ CHECK: Không cho đăng ký quá khứ & hôm nay
+            // ================================
+            $ngayCa = \Carbon\Carbon::parse($lichLam->ngay)->startOfDay();
+            $homNay = \Carbon\Carbon::today();
+
+            if ($ngayCa->lte($homNay)) {
+                return response()->json([
+                    'message' => 'Chỉ được đăng ký ca từ ngày mai trở đi'
+                ], 400);
+            }
 
             // ================================
             // ❌ CHECK 1: Đã đăng ký ca trong ngày chưa
@@ -199,6 +210,12 @@ class DangKyCaController extends Controller
                 return response()->json([
                     'message' => 'Lịch làm không tồn tại'
                 ], 404);
+            }
+            $ngayCa = \Carbon\Carbon::parse($lichLam->ngay)->startOfDay();
+            if ($ngayCa->isPast() || $ngayCa->isToday()) {
+                return response()->json([
+                    'message' => 'Không thể đăng ký ca trong quá khứ hoặc hôm nay'
+                ], 400);
             }
 
             // ================================
